@@ -9,6 +9,7 @@ interface AlarmContextType {
   updateAlarm: (alarm: Alarm) => Promise<void>;
   deleteAlarm: (id: string) => Promise<void>;
   toggleAlarm: (id: string, isEnabled: boolean) => Promise<void>;
+  setSnoozedUntil: (id: string, snoozedUntil: Date | undefined) => Promise<void>;
 }
 
 const AlarmContext = createContext<AlarmContextType | undefined>(undefined);
@@ -45,8 +46,13 @@ export const AlarmProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     await loadAlarms();
   };
 
+  const setSnoozedUntil = async (id: string, snoozedUntil: Date | undefined) => {
+    await alarmStorage.setAlarmSnoozedUntil(id, snoozedUntil);
+    await loadAlarms();
+  };
+
   return (
-    <AlarmContext.Provider value={{ alarms, loadAlarms, addAlarm, updateAlarm, deleteAlarm, toggleAlarm }}>
+    <AlarmContext.Provider value={{ alarms, loadAlarms, addAlarm, updateAlarm, deleteAlarm, toggleAlarm, setSnoozedUntil }}>
       {children}
     </AlarmContext.Provider>
   );

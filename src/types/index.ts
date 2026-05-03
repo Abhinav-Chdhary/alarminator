@@ -7,4 +7,5 @@ export interface Alarm {
   repeatDays?: number[]; // 0 = Sun, 1 = Mon, etc.
   notificationIds?: string[];
   snoozeNotificationId?: string;
+  snoozedUntil?: Date;
 }

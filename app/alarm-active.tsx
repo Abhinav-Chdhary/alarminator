@@ -1,34 +1,90 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Notifications from 'expo-notifications';
+import { Audio } from 'expo-av';
+import { addMinutes } from 'date-fns';
+
 import { Text } from '../src/components/01_atoms/Text';
 import { Button } from '../src/components/01_atoms/Button';
 import { theme } from '../src/theme';
 import { snoozeAlarm, clearSnoozeNotification } from '../src/services/notificationService';
+import { useAlarms } from '../src/store/AlarmContext';
 
 export default function AlarmActiveScreen() {
   const { alarmId, task } = useLocalSearchParams<{ alarmId: string, task: string }>();
   const router = useRouter();
+  const { setSnoozedUntil } = useAlarms();
   
   const [snoozeMinutes, setSnoozeMinutes] = useState(5);
+  const [message, setMessage] = useState<{ title: string, body: string } | null>(null);
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  useEffect(() => {
+    Notifications.dismissAllNotificationsAsync();
+  }, []);
+
+  useEffect(() => {
+    async function playSound() {
+      try {
+        await Audio.setAudioModeAsync({
+          staysActiveInBackground: true,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          require('../sounds/wrist_watch.wav'),
+          { isLooping: true, shouldPlay: true }
+        );
+        soundRef.current = newSound;
+      } catch (error) {
+        console.error("Failed to play sound", error);
+      }
+    }
+    playSound();
+
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.stopAsync().then(() => soundRef.current?.unloadAsync()).catch(console.error);
+      }
+    };
+  }, []);
+
+  const stopSound = async () => {
+    if (soundRef.current) {
+      await soundRef.current.stopAsync().catch(console.error);
+      await soundRef.current.unloadAsync().catch(console.error);
+      soundRef.current = null;
+    }
+  };
 
   const handleSnooze = async () => {
     if (!alarmId) return;
+    await stopSound();
     await snoozeAlarm(alarmId, snoozeMinutes);
-    Alert.alert('Snoozed', `Alarm snoozed for ${snoozeMinutes} minutes.`);
-    router.back();
+    await setSnoozedUntil(alarmId, addMinutes(new Date(), snoozeMinutes));
+    
+    setMessage({ title: 'Snoozed', body: `Alarm snoozed for ${snoozeMinutes} minutes.` });
+    setTimeout(() => {
+      router.back();
+    }, 2000);
   };
 
   const handleDismiss = async () => {
-    // Phase 1: Direct dismissal (for testing)
-    // Later: Navigate to puzzle screen
-    if (alarmId) {
-       await clearSnoozeNotification(alarmId);
-    }
-    // We'll navigate to the first puzzle task here later.
-    Alert.alert('Task', `You need to: ${decodeURIComponent(task || 'Do the puzzle')}\n\n(Puzzle UI not implemented yet. Dismissing alarm.)`);
-    router.back();
+    if (!alarmId) return;
+    await stopSound();
+    await clearSnoozeNotification(alarmId);
+    await setSnoozedUntil(alarmId, undefined);
+    
+    setMessage({ 
+      title: 'Task', 
+      body: `You need to: ${decodeURIComponent(task || 'Do the puzzle')}\n\n(Puzzle UI not implemented yet. Dismissing alarm.)` 
+    });
+    setTimeout(() => {
+      router.back();
+    }, 3000);
   };
 
   const adjustSnooze = (increment: boolean) => {
@@ -42,6 +98,15 @@ export default function AlarmActiveScreen() {
       }
     });
   };
+
+  if (message) {
+    return (
+      <SafeAreaView style={[styles.container, styles.messageContainer]}>
+        <Text variant="h1" color={theme.colors.primary} style={styles.messageTitle}>{message.title}</Text>
+        <Text variant="h3" align="center" color={theme.colors.onBackground}>{message.body}</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -83,6 +148,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: theme.spacing.xl,
     justifyContent: 'space-between',
+  },
+  messageContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xl,
+  },
+  messageTitle: {
+    marginBottom: theme.spacing.lg,
   },
   header: {
     alignItems: 'center',

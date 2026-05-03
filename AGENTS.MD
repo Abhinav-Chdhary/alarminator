@@ -94,8 +94,8 @@ Run at minimum:
 
 ## Workflow Rules (Mandatory)
 Every agent interacting with this repo MUST follow these workflow rules:
-1. **Plan first**: Before making changes, create/update a plan in `Plans/` (e.g., `Plans/plan_feature_name.md`).
-2. **Session Reports**: At the end of every session, append a summary of work done to `Reports/session_reports.md` (or create a new one if it's a major milestone).
+1. **Plan first**: Before making changes, create/update a plan in `Plans/` (e.g., `Plans/{{DD-MM-YYYY}}_{{short_description}}}.md`).
+2. **Session Reports**: At the end of every session, append a summary of work done to `Reports/{{DD-MM-YYYY}}_{{short_description}}}.md` (or create a new one if it's a major milestone).
 3. **Traceability**: All major decisions and changed files should be logged in the session report.
 
 ## Collaboration Notes for Agents

@@ -14,6 +14,7 @@ export const getAlarms = async (): Promise<Alarm[]> => {
       return parsedAlarms.map((a: any) => ({
         ...a,
         time: new Date(a.time),
+        snoozedUntil: a.snoozedUntil ? new Date(a.snoozedUntil) : undefined,
       }));
     }
     return [];
@@ -98,8 +99,19 @@ export const toggleAlarm = async (id: string, isEnabled: boolean): Promise<Alarm
       await cancelAlarmNotification(id, alarms[index].notificationIds);
       alarms[index].notificationIds = [];
       alarms[index].snoozeNotificationId = undefined;
+      alarms[index].snoozedUntil = undefined;
       await saveAlarms(alarms);
     }
+  }
+  return alarms;
+};
+
+export const setAlarmSnoozedUntil = async (id: string, snoozedUntil: Date | undefined): Promise<Alarm[]> => {
+  const alarms = await getAlarms();
+  const index = alarms.findIndex(a => a.id === id);
+  if (index > -1) {
+    alarms[index].snoozedUntil = snoozedUntil;
+    await saveAlarms(alarms);
   }
   return alarms;
 };
