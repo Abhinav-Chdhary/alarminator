@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
-import { Audio } from 'expo-av';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 import { addMinutes } from 'date-fns';
 
 import { Text } from '../src/components/01_atoms/Text';
@@ -12,6 +12,19 @@ import { theme } from '../src/theme';
 import { snoozeAlarm, clearSnoozeNotification } from '../src/services/notificationService';
 import { useAlarms } from '../src/store/AlarmContext';
 
+type AlarmSound = {
+  stopAsync: () => Promise<unknown>;
+  unloadAsync: () => Promise<unknown>;
+  playAsync: () => Promise<unknown>;
+  replayAsync: () => Promise<unknown>;
+  setIsLoopingAsync: (isLooping: boolean) => Promise<unknown>;
+  setOnPlaybackStatusUpdate: (
+    onPlaybackStatusUpdate: ((status: { isLoaded?: boolean; didJustFinish?: boolean }) => void) | null
+  ) => void;
+};
+
+const hasExponentAV = !!requireOptionalNativeModule('ExponentAV');
+
 export default function AlarmActiveScreen() {
   const { alarmId, task } = useLocalSearchParams<{ alarmId: string, task: string }>();
   const router = useRouter();
@@ -19,7 +32,7 @@ export default function AlarmActiveScreen() {
   
   const [snoozeMinutes, setSnoozeMinutes] = useState(5);
   const [message, setMessage] = useState<{ title: string, body: string } | null>(null);
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const soundRef = useRef<AlarmSound | null>(null);
 
   useEffect(() => {
     Notifications.dismissAllNotificationsAsync();
@@ -27,7 +40,12 @@ export default function AlarmActiveScreen() {
 
   useEffect(() => {
     async function playSound() {
+      if (!hasExponentAV) {
+        return;
+      }
+
       try {
+        const { Audio } = await import('expo-av');
         await Audio.setAudioModeAsync({
           staysActiveInBackground: true,
           playsInSilentModeIOS: true,
@@ -35,25 +53,39 @@ export default function AlarmActiveScreen() {
           playThroughEarpieceAndroid: false,
         });
         const { sound: newSound } = await Audio.Sound.createAsync(
-          require('../sounds/wrist_watch.wav'),
+          require('../sounds/WristWatch.wav'),
           { isLooping: true, shouldPlay: true }
         );
+        newSound.setOnPlaybackStatusUpdate((status) => {
+          if (!status.isLoaded) return;
+
+          // Fallback safety: if looping ever stops, immediately restart playback.
+          if (status.didJustFinish) {
+            newSound.replayAsync().catch(console.error);
+          }
+        });
+        await newSound.setIsLoopingAsync(true);
+        await newSound.playAsync();
         soundRef.current = newSound;
       } catch (error) {
-        console.error("Failed to play sound", error);
+        console.warn('Failed to play alarm sound with expo-av.', error);
       }
     }
     playSound();
 
     return () => {
       if (soundRef.current) {
-        soundRef.current.stopAsync().then(() => soundRef.current?.unloadAsync()).catch(console.error);
+        const currentSound = soundRef.current;
+        soundRef.current = null;
+        currentSound.setOnPlaybackStatusUpdate(null);
+        currentSound.stopAsync().then(() => currentSound.unloadAsync()).catch(console.error);
       }
     };
   }, []);
 
   const stopSound = async () => {
     if (soundRef.current) {
+      soundRef.current.setOnPlaybackStatusUpdate(null);
       await soundRef.current.stopAsync().catch(console.error);
       await soundRef.current.unloadAsync().catch(console.error);
       soundRef.current = null;

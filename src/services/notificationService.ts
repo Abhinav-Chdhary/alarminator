@@ -4,7 +4,7 @@ import { Alarm } from '../types';
 
 const ALARM_CHANNEL_ID = 'alarminator-alarms-v2';
 const SNOOZE_ID_PREFIX = 'alarm-snooze-';
-const DEFAULT_ALARM_SOUND = 'wrist_watch.wav';
+const DEFAULT_ALARM_SOUND = 'WristWatch.wav';
 
 type ReconcileResult = {
   alarms: Alarm[];

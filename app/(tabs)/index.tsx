@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAlarms } from '../../src/store/AlarmContext';
 import { AlarmCard } from '../../src/components/02_molecules/AlarmCard';
@@ -7,7 +7,6 @@ import { TimePickerPopup } from '../../src/components/02_molecules/TimePickerPop
 import { Text } from '../../src/components/01_atoms/Text';
 import { theme } from '../../src/theme';
 import { addMinutes } from 'date-fns';
-import { TouchableOpacity } from 'react-native';
 
 export default function HomeScreen() {
   const { alarms, addAlarm, toggleAlarm, deleteAlarm, updateAlarm } = useAlarms();
@@ -60,8 +59,6 @@ export default function HomeScreen() {
               No alarms yet. Add one below!
             </Text>
           }
-        />
-
         />
 
         <TouchableOpacity style={styles.fab} onPress={handleAddDemoAlarm}>
