@@ -29,7 +29,7 @@
       [
         "expo-notifications",
         {
-          "sounds": ["./sounds/WristWatch.wav"]
+          "sounds": ["./sounds/wrist_watch.wav"]
         }
       ],
       [

@@ -1,10 +1,10 @@
+import { format } from 'date-fns';
 import React from 'react';
-import { View, StyleSheet, Switch } from 'react-native';
-import { Text } from '../01_atoms/Text';
+import { StyleSheet, Switch, View } from 'react-native';
 import { theme } from '../../theme';
 import { Alarm } from '../../types';
-import { format } from 'date-fns';
-import { Button } from '../01_atoms/Button';
+import { Text } from '../01_atoms/Text';
+// import { Button } from '../01_atoms/Button';
 
 interface Props {
   alarm: Alarm;
@@ -32,28 +32,28 @@ export const AlarmCard: React.FC<Props> = ({ alarm, onToggle, onDelete, onTimePr
         )}
       </View>
       <View style={styles.header}>
-        <View 
-          style={styles.timeWrapper} 
+        <View
+          style={styles.timeWrapper}
           onTouchEnd={() => onTimePress && onTimePress(alarm.id)}
         >
-          <Text 
-            variant="h2" 
+          <Text
+            variant="h2"
             color={alarm.isEnabled ? theme.colors.onBackground : theme.colors.onSurfaceInactive}
             style={styles.timeText}
           >
             {format(alarm.time, 'h:mm')}
           </Text>
-          <Text 
-            variant="body" 
-            color={alarm.isEnabled ? theme.colors.onBackground : theme.colors.onSurfaceInactive} 
+          <Text
+            variant="body"
+            color={alarm.isEnabled ? theme.colors.onBackground : theme.colors.onSurfaceInactive}
             style={styles.amPm}
           >
             {format(alarm.time, 'a').toLowerCase()}
           </Text>
         </View>
-        <Switch 
-          value={alarm.isEnabled} 
-          onValueChange={(val) => onToggle(alarm.id, val)} 
+        <Switch
+          value={alarm.isEnabled}
+          onValueChange={(val) => onToggle(alarm.id, val)}
           trackColor={{ false: theme.colors.switchTrackInactive, true: theme.colors.switchTrackActive }}
           thumbColor={alarm.isEnabled ? theme.colors.switchThumbActive : theme.colors.switchThumbInactive}
         />

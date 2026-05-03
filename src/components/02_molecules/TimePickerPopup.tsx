@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Modal, TouchableOpacity, Dimensions } from 'react-native';
-import { Text } from '../01_atoms/Text';
+import { setHours, setMinutes } from 'date-fns';
+import React, { useEffect, useState } from 'react';
+import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { theme } from '../../theme';
-import { format, setHours, setMinutes } from 'date-fns';
+import { Text } from '../01_atoms/Text';
 
 interface Props {
   visible: boolean;
@@ -49,7 +49,7 @@ export const TimePickerPopup: React.FC<Props> = ({ visible, initialTime, onClose
     }
   };
 
-  const dialNumbers = mode === 'hour' 
+  const dialNumbers = mode === 'hour'
     ? [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     : [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
@@ -63,7 +63,7 @@ export const TimePickerPopup: React.FC<Props> = ({ visible, initialTime, onClose
 
   const selectedValue = mode === 'hour' ? (currentHour % 12 === 0 ? 12 : currentHour % 12) : currentMinute;
   const selectedIndex = dialNumbers.indexOf(selectedValue);
-  
+
   const displayHour = currentHour % 12 === 0 ? 12 : currentHour % 12;
   const displayMinute = currentMinute < 10 ? `0${currentMinute}` : `${currentMinute}`;
   const displayHourStr = displayHour < 10 ? `0${displayHour}` : `${displayHour}`;
@@ -77,7 +77,7 @@ export const TimePickerPopup: React.FC<Props> = ({ visible, initialTime, onClose
           </Text>
 
           <View style={styles.displayContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.timeBlock, mode === 'hour' && styles.timeBlockActive]}
               onPress={() => setMode('hour')}
             >
@@ -85,10 +85,10 @@ export const TimePickerPopup: React.FC<Props> = ({ visible, initialTime, onClose
                 {displayHourStr}
               </Text>
             </TouchableOpacity>
-            
+
             <Text variant="h2" color={theme.colors.disabled} style={styles.colon}>:</Text>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[styles.timeBlock, mode === 'minute' && styles.timeBlockActive]}
               onPress={() => setMode('minute')}
             >
@@ -98,13 +98,13 @@ export const TimePickerPopup: React.FC<Props> = ({ visible, initialTime, onClose
             </TouchableOpacity>
 
             <View style={styles.amPmContainer}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.amPmButton, isAm && styles.amPmButtonActive, { borderBottomWidth: 1, borderBottomColor: theme.colors.secondaryVariant }]}
                 onPress={() => handleAmPm(true)}
               >
                 <Text variant="body" color={isAm ? theme.colors.primary : theme.colors.disabled}>a.m.</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.amPmButton, !isAm && styles.amPmButtonActive]}
                 onPress={() => handleAmPm(false)}
               >
@@ -118,13 +118,13 @@ export const TimePickerPopup: React.FC<Props> = ({ visible, initialTime, onClose
               {selectedIndex !== -1 && (
                 <>
                   <View style={styles.dialCenter} />
-                  <View 
+                  <View
                     style={[
-                      styles.dialHand, 
+                      styles.dialHand,
                       { transform: [{ rotate: `${selectedIndex * 30}deg` }] }
-                    ]} 
+                    ]}
                   />
-                  <View 
+                  <View
                     style={[
                       styles.dialSelection,
                       { left: getCoordinates(selectedIndex, 12).x - 5, top: getCoordinates(selectedIndex, 12).y - 5 }
@@ -136,8 +136,8 @@ export const TimePickerPopup: React.FC<Props> = ({ visible, initialTime, onClose
                 const pos = getCoordinates(i, 12);
                 const isSelected = selectedValue === num;
                 return (
-                  <TouchableOpacity 
-                    key={i} 
+                  <TouchableOpacity
+                    key={i}
                     style={[styles.dialNumber, { left: pos.x, top: pos.y }]}
                     onPress={() => handleDialPress(num)}
                   >

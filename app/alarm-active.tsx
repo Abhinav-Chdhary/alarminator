@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as Notifications from 'expo-notifications';
-import { requireOptionalNativeModule } from 'expo-modules-core';
 import { addMinutes } from 'date-fns';
+import { requireOptionalNativeModule } from 'expo-modules-core';
+import * as Notifications from 'expo-notifications';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Text } from '../src/components/01_atoms/Text';
 import { Button } from '../src/components/01_atoms/Button';
-import { theme } from '../src/theme';
-import { snoozeAlarm, clearSnoozeNotification } from '../src/services/notificationService';
+import { Text } from '../src/components/01_atoms/Text';
+import { clearSnoozeNotification, snoozeAlarm } from '../src/services/notificationService';
 import { useAlarms } from '../src/store/AlarmContext';
+import { theme } from '../src/theme';
 
 type AlarmSound = {
   stopAsync: () => Promise<unknown>;
@@ -29,7 +29,7 @@ export default function AlarmActiveScreen() {
   const { alarmId, task } = useLocalSearchParams<{ alarmId: string, task: string }>();
   const router = useRouter();
   const { setSnoozedUntil } = useAlarms();
-  
+
   const [snoozeMinutes, setSnoozeMinutes] = useState(5);
   const [message, setMessage] = useState<{ title: string, body: string } | null>(null);
   const soundRef = useRef<AlarmSound | null>(null);
@@ -53,7 +53,7 @@ export default function AlarmActiveScreen() {
           playThroughEarpieceAndroid: false,
         });
         const { sound: newSound } = await Audio.Sound.createAsync(
-          require('../sounds/WristWatch.wav'),
+          require('../sounds/wrist_watch.wav'),
           { isLooping: true, shouldPlay: true }
         );
         newSound.setOnPlaybackStatusUpdate((status) => {
@@ -97,7 +97,7 @@ export default function AlarmActiveScreen() {
     await stopSound();
     await snoozeAlarm(alarmId, snoozeMinutes);
     await setSnoozedUntil(alarmId, addMinutes(new Date(), snoozeMinutes));
-    
+
     setMessage({ title: 'Snoozed', body: `Alarm snoozed for ${snoozeMinutes} minutes.` });
     setTimeout(() => {
       router.back();
@@ -109,10 +109,10 @@ export default function AlarmActiveScreen() {
     await stopSound();
     await clearSnoozeNotification(alarmId);
     await setSnoozedUntil(alarmId, undefined);
-    
-    setMessage({ 
-      title: 'Task', 
-      body: `You need to: ${decodeURIComponent(task || 'Do the puzzle')}\n\n(Puzzle UI not implemented yet. Dismissing alarm.)` 
+
+    setMessage({
+      title: 'Task',
+      body: `You need to: ${decodeURIComponent(task || 'Do the puzzle')}\n\n(Puzzle UI not implemented yet. Dismissing alarm.)`
     });
     setTimeout(() => {
       router.back();

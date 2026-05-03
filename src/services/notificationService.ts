@@ -1,10 +1,10 @@
-import { Alert, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { Alert, Platform } from 'react-native';
 import { Alarm } from '../types';
 
 const ALARM_CHANNEL_ID = 'alarminator-alarms-v2';
 const SNOOZE_ID_PREFIX = 'alarm-snooze-';
-const DEFAULT_ALARM_SOUND = 'WristWatch.wav';
+const DEFAULT_ALARM_SOUND = 'wrist_watch.wav';
 
 type ReconcileResult = {
   alarms: Alarm[];
