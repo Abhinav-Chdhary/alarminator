@@ -5,22 +5,28 @@ import { theme } from '../../theme';
 import { Alarm } from '../../types';
 import { Text } from '../01_atoms/Text';
 // import { Button } from '../01_atoms/Button';
+import { TouchableOpacity } from 'react-native';
 
 interface Props {
   alarm: Alarm;
   onToggle: (id: string, isEnabled: boolean) => void;
   onDelete: (id: string) => void;
   onTimePress?: (id: string) => void;
+  onBodyPress?: (id: string) => void;
 }
 
-export const AlarmCard: React.FC<Props> = ({ alarm, onToggle, onDelete, onTimePress }) => {
+export const AlarmCard: React.FC<Props> = ({ alarm, onToggle, onDelete, onTimePress, onBodyPress }) => {
   const isSnoozing = alarm.snoozedUntil && new Date(alarm.snoozedUntil) > new Date();
 
   return (
-    <View style={[
-      styles.container,
-      { backgroundColor: alarm.isEnabled ? theme.colors.surfaceActive : theme.colors.surface }
-    ]}>
+    <TouchableOpacity 
+      activeOpacity={0.8}
+      onPress={() => onBodyPress && onBodyPress(alarm.id)}
+      style={[
+        styles.container,
+        { backgroundColor: alarm.isEnabled ? theme.colors.surfaceActive : theme.colors.surface }
+      ]}
+    >
       <View style={styles.topRow}>
         <Text variant="caption" color={alarm.isEnabled ? theme.colors.primary : theme.colors.onSurfaceInactive}>
           {!alarm.isEnabled ? 'Not scheduled' : (alarm.repeatDays && alarm.repeatDays.length > 0 ? 'Every day' : 'Today')}
@@ -58,7 +64,7 @@ export const AlarmCard: React.FC<Props> = ({ alarm, onToggle, onDelete, onTimePr
           thumbColor={alarm.isEnabled ? theme.colors.switchThumbActive : theme.colors.switchThumbInactive}
         />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

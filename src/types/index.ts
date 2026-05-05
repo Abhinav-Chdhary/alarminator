@@ -8,4 +8,6 @@ export interface Alarm {
   notificationIds?: string[];
   snoozeNotificationId?: string;
   snoozedUntil?: Date;
+  sound?: string;
+  vibrate?: boolean;
 }

@@ -2,6 +2,13 @@
 
 This document outlines the various tasks a user must complete to dismiss an alarm, ordered by implementation difficulty (easiest to hardest).
 
+## todos
+
+- [x] Allow setting alarms (Right now when we click on the plus button, only the alarm is created right away. Instead the alarm is created right away for plus 1 minute but we should show the same modal for setting the time that we use in editing the alarm time. )
+- [ ] Allow setting custom sounds for alarms
+- [ ] Allow changing alarm settings like days of week, time, sound, vibrate or not
+
+
 ## Implementation Order (Phase 1: Core Tasks)
 
 ### 1. Type a sentence using a specific word

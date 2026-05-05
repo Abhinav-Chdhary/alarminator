@@ -6,34 +6,70 @@ import { AlarmCard } from '../../src/components/02_molecules/AlarmCard';
 import { TimePickerPopup } from '../../src/components/02_molecules/TimePickerPopup';
 import { Text } from '../../src/components/01_atoms/Text';
 import { theme } from '../../src/theme';
-import { addMinutes } from 'date-fns';
+
+import { AlarmSettingsPopup } from '../../src/components/02_molecules/AlarmSettingsPopup';
+import { Alarm } from '../../src/types';
 
 export default function HomeScreen() {
   const { alarms, addAlarm, toggleAlarm, deleteAlarm, updateAlarm } = useAlarms();
   const [pickerVisible, setPickerVisible] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
   const [editingAlarmId, setEditingAlarmId] = useState<string | null>(null);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
 
-  const handleAddDemoAlarm = () => {
-    // Add an alarm for 1 minute from now for testing
-    addAlarm(addMinutes(new Date(), 1), 'Morning Wakeup', 'Type word "gravity"');
+  const handleAddPress = () => {
+    setIsCreatingNew(true);
+    setEditingAlarmId(null);
+    setPickerVisible(true);
   };
 
   const handleTimePress = (id: string) => {
+    setIsCreatingNew(false);
     setEditingAlarmId(id);
     setPickerVisible(true);
   };
 
+  const handleBodyPress = (id: string) => {
+    setIsCreatingNew(false);
+    setEditingAlarmId(id);
+    setSettingsVisible(true);
+  };
+
   const handleTimeSave = (newTime: Date) => {
-    if (editingAlarmId) {
+    if (isCreatingNew) {
+      addAlarm(newTime, 'Morning Wakeup', 'Type word "gravity"');
+    } else if (editingAlarmId) {
       const alarmToUpdate = alarms.find(a => a.id === editingAlarmId);
       if (alarmToUpdate) {
         updateAlarm({ ...alarmToUpdate, time: newTime });
       }
     }
     setPickerVisible(false);
+    setIsCreatingNew(false);
   };
 
-  const activeAlarm = alarms.find(a => a.id === editingAlarmId);
+  const handleSettingsSave = (updatedAlarm: Alarm) => {
+    updateAlarm(updatedAlarm);
+    setSettingsVisible(false);
+  };
+
+  const handleSettingsDelete = (id: string) => {
+    deleteAlarm(id);
+    setSettingsVisible(false);
+  };
+
+  const handleSettingsTimePress = () => {
+    setSettingsVisible(false);
+    setPickerVisible(true);
+  };
+
+  const handlePickerClose = () => {
+    setPickerVisible(false);
+    setIsCreatingNew(false);
+  };
+
+  const activeAlarm = editingAlarmId ? alarms.find(a => a.id === editingAlarmId) : null;
+  const initialPickerTime = activeAlarm ? new Date(activeAlarm.time) : new Date();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -52,6 +88,7 @@ export default function HomeScreen() {
               onToggle={toggleAlarm} 
               onDelete={deleteAlarm} 
               onTimePress={handleTimePress}
+              onBodyPress={handleBodyPress}
             />
           )}
           ListEmptyComponent={
@@ -61,16 +98,27 @@ export default function HomeScreen() {
           }
         />
 
-        <TouchableOpacity style={styles.fab} onPress={handleAddDemoAlarm}>
+        <TouchableOpacity style={styles.fab} onPress={handleAddPress}>
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
 
-        {pickerVisible && activeAlarm && (
+        {pickerVisible && (
           <TimePickerPopup
             visible={pickerVisible}
-            initialTime={new Date(activeAlarm.time)}
-            onClose={() => setPickerVisible(false)}
+            initialTime={initialPickerTime}
+            onClose={handlePickerClose}
             onSave={handleTimeSave}
+          />
+        )}
+
+        {settingsVisible && activeAlarm && (
+          <AlarmSettingsPopup
+            visible={settingsVisible}
+            alarm={activeAlarm}
+            onClose={() => setSettingsVisible(false)}
+            onSave={handleSettingsSave}
+            onDelete={handleSettingsDelete}
+            onTimePress={handleSettingsTimePress}
           />
         )}
       </View>
