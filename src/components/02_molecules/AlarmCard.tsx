@@ -71,9 +71,10 @@ export const AlarmCard: React.FC<Props> = ({ alarm, onToggle, onDelete, onTimePr
 
         {/* Time hero row */}
         <View style={styles.header}>
-          <View
+          <TouchableOpacity
+            activeOpacity={0.7}
             style={styles.timeWrapper}
-            onTouchEnd={() => onTimePress && onTimePress(alarm.id)}
+            onPress={() => onTimePress && onTimePress(alarm.id)}
           >
             <Text style={[styles.timeText, { color: numeralColor }]}>
               {format(alarm.time, 'h:mm')}
@@ -81,7 +82,7 @@ export const AlarmCard: React.FC<Props> = ({ alarm, onToggle, onDelete, onTimePr
             <Text style={[styles.amPm, { color: accentColor }]}>
               {format(alarm.time, 'a').toLowerCase()}
             </Text>
-          </View>
+          </TouchableOpacity>
 
           <Switch
             value={enabled}
