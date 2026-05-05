@@ -84,13 +84,15 @@ export const AlarmCard: React.FC<Props> = ({ alarm, onToggle, onDelete, onTimePr
             </Text>
           </TouchableOpacity>
 
-          <Switch
-            value={enabled}
-            onValueChange={(val) => onToggle(alarm.id, val)}
-            trackColor={{ false: theme.colors.switchTrackInactive, true: theme.colors.accentSoft }}
-            thumbColor={enabled ? theme.colors.accent : theme.colors.switchThumbInactive}
-            ios_backgroundColor={theme.colors.switchTrackInactive}
-          />
+          <View style={styles.switchWrap}>
+            <Switch
+              value={enabled}
+              onValueChange={(val) => onToggle(alarm.id, val)}
+              trackColor={{ false: theme.colors.switchTrackInactive, true: theme.colors.accentSoft }}
+              thumbColor={enabled ? theme.colors.accent : theme.colors.switchThumbInactive}
+              ios_backgroundColor={theme.colors.switchTrackInactive}
+            />
+          </View>
         </View>
 
         {/* Optional label — italic subtitle */}
@@ -179,5 +181,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
     marginTop: 2,
+  },
+  switchWrap: {
+    minHeight: 33,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
 });

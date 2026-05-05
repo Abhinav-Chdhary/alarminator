@@ -10,7 +10,7 @@ This document outlines the various tasks a user must complete to dismiss an alar
 
 ## Issues
 - [x] Clicking on the time opens the time picker and the alarm setting popup both. 
-- [ ] Enabled and disabled toggles of the alarm card are misaligned horizontally in the stack of alarm cards. 
+- [x] Enabled and disabled toggles of the alarm card are misaligned horizontally in the stack of alarm cards. 
 
 ## Implementation Order (Phase 1: Core Tasks)
 

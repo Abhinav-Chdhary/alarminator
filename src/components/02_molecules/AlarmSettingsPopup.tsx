@@ -197,8 +197,9 @@ export const AlarmSettingsPopup: React.FC<Props> = ({
                 <Switch
                   value={editedAlarm.vibrate ?? true}
                   onValueChange={(val) => setEditedAlarm({ ...editedAlarm, vibrate: val })}
-                  trackColor={{ false: theme.colors.switchTrackInactive, true: theme.colors.switchTrackActive }}
-                  thumbColor={editedAlarm.vibrate !== false ? theme.colors.switchThumbActive : theme.colors.switchThumbInactive}
+                  trackColor={{ false: theme.colors.switchTrackInactive, true: theme.colors.accentSoft }}
+                  thumbColor={editedAlarm.vibrate ?? true ? theme.colors.accent : theme.colors.switchThumbInactive}
+                  ios_backgroundColor={theme.colors.switchTrackInactive}
                 />
               </View>
             </View>
@@ -277,14 +278,14 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   scrollContent: {
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: theme.spacing.sm,
   },
 
   /* Hero */
   heroWrap: {
     position: 'relative',
-    marginBottom: theme.spacing.xl,
-    paddingVertical: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
   },
   heroHalo: {
     position: 'absolute',
@@ -490,7 +491,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: theme.spacing.lg,
+    marginTop: theme.spacing.sm,
     paddingTop: theme.spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.border,
