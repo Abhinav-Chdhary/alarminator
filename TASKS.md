@@ -8,6 +8,8 @@ This document outlines the various tasks a user must complete to dismiss an alar
 - [ ] Allow setting custom sounds for alarms
 - [ ] Allow changing alarm settings like days of week, time, sound, vibrate or not
 
+## Issues
+- [ ] Clicking on the time opens the time picker and the alarm setting popup both. 
 
 ## Implementation Order (Phase 1: Core Tasks)
 

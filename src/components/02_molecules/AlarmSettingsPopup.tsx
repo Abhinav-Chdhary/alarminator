@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import React, { useRef, useState } from 'react';
 import { Modal, PanResponder, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export const AlarmSettingsPopup: React.FC<Props> = ({
   visible,
@@ -39,12 +41,9 @@ export const AlarmSettingsPopup: React.FC<Props> = ({
 
   const toggleDay = (dayIndex: number) => {
     const currentDays = editedAlarm.repeatDays || [];
-    let newDays;
-    if (currentDays.includes(dayIndex)) {
-      newDays = currentDays.filter(d => d !== dayIndex);
-    } else {
-      newDays = [...currentDays, dayIndex].sort();
-    }
+    const newDays = currentDays.includes(dayIndex)
+      ? currentDays.filter(d => d !== dayIndex)
+      : [...currentDays, dayIndex].sort();
     setEditedAlarm({ ...editedAlarm, repeatDays: newDays });
   };
 
@@ -52,49 +51,78 @@ export const AlarmSettingsPopup: React.FC<Props> = ({
     return (editedAlarm.repeatDays || []).includes(dayIndex);
   };
 
-  const handleSave = () => {
-    onSave(editedAlarm);
+  const repeatSummary = () => {
+    const days = editedAlarm.repeatDays || [];
+    if (days.length === 0) return 'Once';
+    if (days.length === 7) return 'Every day';
+    const weekdays = [1, 2, 3, 4, 5];
+    const weekend = [0, 6];
+    const isWeekdays = weekdays.every(d => days.includes(d)) && days.length === 5;
+    const isWeekend = weekend.every(d => days.includes(d)) && days.length === 2;
+    if (isWeekdays) return 'Weekdays';
+    if (isWeekend) return 'Weekend';
+    return days.map(d => DAY_NAMES[d]).join(', ');
   };
 
-  const handleDelete = () => {
-    onDelete(alarm.id);
-  };
+  const handleSave = () => onSave(editedAlarm);
+  const handleDelete = () => onDelete(alarm.id);
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modalContent}>
+          {/* Drag handle */}
           <View style={styles.dragHandleContainer} {...panResponder.panHandlers}>
             <View style={styles.dragHandle} />
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-            {/* Time Header */}
-            <View style={styles.headerRow}>
-              <View style={styles.timeWrapper}>
-                <Text variant="h1" style={styles.timeText}>
-                  {format(editedAlarm.time, 'h:mm')}
-                </Text>
-                <Text variant="body" style={styles.amPm}>
-                  {format(editedAlarm.time, 'a').toLowerCase()}
-                </Text>
-              </View>
-              <TouchableOpacity style={styles.editButton} onPress={onTimePress}>
-                <Text variant="body" color={theme.colors.onBackground}>Edit</Text>
+          {/* Eyebrow row */}
+          <View style={styles.eyebrowRow}>
+            <Text variant="caption" style={styles.eyebrow} color={theme.colors.onSurfaceInactive}>
+              EDIT ALARM
+            </Text>
+            <TouchableOpacity onPress={onClose} hitSlop={12} style={styles.closeBtn}>
+              <Feather name="x" size={18} color={theme.colors.onSurfaceInactive} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            {/* Time hero with halo */}
+            <View style={styles.heroWrap}>
+              <View pointerEvents="none" style={styles.heroHalo} />
+              <TouchableOpacity activeOpacity={0.7} onPress={onTimePress} style={styles.heroTouch}>
+                <View style={styles.timeWrapper}>
+                  <Text style={styles.timeText}>{format(editedAlarm.time, 'h:mm')}</Text>
+                  <View style={styles.amPmWrap}>
+                    <Text style={styles.amPm}>{format(editedAlarm.time, 'a').toLowerCase()}</Text>
+                    <Text style={styles.repeatHint}>{repeatSummary()}</Text>
+                  </View>
+                </View>
+                <View style={styles.editChip}>
+                  <Feather name="edit-2" size={11} color={theme.colors.onBackground} />
+                  <Text variant="caption" style={styles.editChipText}>Change</Text>
+                </View>
               </TouchableOpacity>
             </View>
 
-            {/* Days of Week */}
+            {/* Repeat */}
+            <SectionLabel>REPEAT</SectionLabel>
             <View style={styles.daysRow}>
               {DAYS.map((day, index) => {
                 const selected = isDaySelected(index);
                 return (
                   <TouchableOpacity
                     key={index}
+                    activeOpacity={0.8}
                     style={[styles.dayCircle, selected && styles.dayCircleSelected]}
                     onPress={() => toggleDay(index)}
                   >
-                    <Text variant="caption" color={selected ? theme.colors.onPrimary : theme.colors.primary}>
+                    <Text
+                      style={[
+                        styles.dayText,
+                        selected && styles.dayTextSelected,
+                      ]}
+                    >
                       {day}
                     </Text>
                   </TouchableOpacity>
@@ -102,55 +130,70 @@ export const AlarmSettingsPopup: React.FC<Props> = ({
               })}
             </View>
 
-            {/* Schedule Info */}
-            <View style={styles.scheduleInfo}>
-              <View>
-                <Text variant="caption" color={theme.colors.onSurfaceInactive}>Upcoming alarm</Text>
-                <Text variant="body" color={theme.colors.onBackground}>Tomorrow</Text>
+            {/* Schedule info */}
+            <View style={styles.scheduleCard}>
+              <View style={styles.scheduleLeft}>
+                <View style={styles.accentDot} />
+                <View>
+                  <Text variant="caption" color={theme.colors.onSurfaceInactive} style={styles.scheduleEyebrow}>
+                    UPCOMING
+                  </Text>
+                  <Text style={styles.scheduleValue}>Tomorrow</Text>
+                </View>
               </View>
-              <TouchableOpacity style={styles.scheduleButton}>
-                <Text variant="body" color={theme.colors.onBackground}>Schedule alarm</Text>
+              <TouchableOpacity style={styles.scheduleAction} hitSlop={8}>
+                <Text variant="caption" style={styles.scheduleActionText}>Schedule</Text>
+                <Feather name="chevron-right" size={14} color={theme.colors.onBackground} />
               </TouchableOpacity>
             </View>
 
-            {/* Pause alarm */}
-            <View style={styles.settingsGroup}>
-              <View style={styles.settingRow}>
-                <Text variant="body" color={theme.colors.onBackground}>Pause alarm</Text>
-                <Text variant="h2" color={theme.colors.onBackground}>+</Text>
+            {/* Pause */}
+            <SectionLabel>PAUSE ALARM</SectionLabel>
+            <TouchableOpacity activeOpacity={0.85} style={styles.row}>
+              <View>
+                <Text style={styles.rowLabel}>Add a break</Text>
+                <Text variant="caption" color={theme.colors.onSurfaceInactive} style={styles.rowSub}>
+                  Skip the next ring without disabling
+                </Text>
               </View>
-            </View>
+              <Feather name="plus" size={18} color={theme.colors.onBackground} />
+            </TouchableOpacity>
 
-            {/* More settings */}
+            {/* Details */}
+            <SectionLabel>ALARM DETAILS</SectionLabel>
             <View style={styles.settingsGroup}>
-              {/* Alarm name */}
-              <View style={styles.settingRow}>
-                <Text variant="body" color={theme.colors.onBackground}>Alarm name</Text>
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Name</Text>
                 <TextInput
                   style={styles.textInput}
                   value={editedAlarm.label}
+                  placeholder="Untitled"
                   onChangeText={(text) => setEditedAlarm({ ...editedAlarm, label: text })}
                   placeholderTextColor={theme.colors.onSurfaceInactive}
                 />
               </View>
 
-              {/* Horizontal divider */}
               <View style={styles.divider} />
 
-              {/* Sound */}
-              <View style={styles.settingRow}>
-                <Text variant="body" color={theme.colors.onBackground}>Sound</Text>
-                <Text variant="body" color={theme.colors.onSurfaceInactive}>
-                  {editedAlarm.sound || 'repeater'}
-                </Text>
-              </View>
+              <TouchableOpacity activeOpacity={0.85} style={styles.row}>
+                <Text style={styles.rowLabel}>Sound</Text>
+                <View style={styles.rowRight}>
+                  <Text variant="body" color={theme.colors.onSurfaceInactive}>
+                    {editedAlarm.sound || 'repeater'}
+                  </Text>
+                  <Feather
+                    name="chevron-right"
+                    size={16}
+                    color={theme.colors.onSurfaceInactive}
+                    style={styles.chevron}
+                  />
+                </View>
+              </TouchableOpacity>
 
-              {/* Horizontal divider */}
               <View style={styles.divider} />
 
-              {/* Vibrate */}
-              <View style={styles.settingRow}>
-                <Text variant="body" color={theme.colors.onBackground}>Vibrate</Text>
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Vibrate</Text>
                 <Switch
                   value={editedAlarm.vibrate ?? true}
                   onValueChange={(val) => setEditedAlarm({ ...editedAlarm, vibrate: val })}
@@ -159,23 +202,17 @@ export const AlarmSettingsPopup: React.FC<Props> = ({
                 />
               </View>
             </View>
-
-            {/* TODO: figure out what this setting should do */}
-            {/* <View style={styles.settingsGroup}>
-              <View style={styles.settingRow}>
-                <Text variant="body" color={theme.colors.onBackground}>Routines</Text>
-                <Text variant="h2" color={theme.colors.onBackground}>+</Text>
-              </View>
-            </View> */}
           </ScrollView>
 
-          {/* Footer Actions */}
+          {/* Footer */}
           <View style={styles.footer}>
-            <TouchableOpacity style={styles.footerButton} onPress={handleDelete}>
-              <Text variant="body" color="#FF6B6B">Delete</Text>
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete} activeOpacity={0.7}>
+              <Feather name="trash-2" size={14} color="#FF6B6B" />
+              <Text style={styles.deleteText}>Delete</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.footerButton, styles.saveButton]} onPress={handleSave}>
-              <Text variant="body" color={theme.colors.background}>Save</Text>
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.85}>
+              <Text style={styles.saveText}>Save changes</Text>
+              <Feather name="arrow-right" size={16} color={theme.colors.background} />
             </TouchableOpacity>
           </View>
         </View>
@@ -184,19 +221,30 @@ export const AlarmSettingsPopup: React.FC<Props> = ({
   );
 };
 
+const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <View style={styles.sectionLabelRow}>
+    <Text variant="caption" style={styles.sectionLabel} color={theme.colors.onSurfaceInactive}>
+      {children}
+    </Text>
+    <View style={styles.sectionHairline} />
+  </View>
+);
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: theme.colors.background, // Dark modal background
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
+    backgroundColor: theme.colors.background,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.xl,
-    maxHeight: '90%',
+    maxHeight: '92%',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.border,
   },
   dragHandleContainer: {
     width: '100%',
@@ -204,100 +252,275 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dragHandle: {
-    width: 40,
+    width: 36,
     height: 4,
-    backgroundColor: theme.colors.secondaryVariant,
+    backgroundColor: theme.colors.border,
     borderRadius: 2,
+  },
+  eyebrowRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  eyebrow: {
+    fontSize: 11,
+    letterSpacing: 2.5,
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
   },
   scrollContent: {
     paddingBottom: theme.spacing.xl,
   },
-  headerRow: {
+
+  /* Hero */
+  heroWrap: {
+    position: 'relative',
+    marginBottom: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
+  },
+  heroHalo: {
+    position: 'absolute',
+    top: -40,
+    left: -60,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: theme.colors.accentSoft,
+    opacity: 0.55,
+  },
+  heroTouch: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    alignItems: 'flex-end',
   },
   timeWrapper: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'flex-end',
   },
   timeText: {
-    fontSize: 48,
-    marginRight: 4,
+    color: theme.colors.onBackground,
+    fontSize: 76,
+    fontWeight: '200',
+    letterSpacing: -3,
+    lineHeight: 80,
+    fontVariant: ['tabular-nums'],
+    includeFontPadding: false,
+  },
+  amPmWrap: {
+    marginLeft: theme.spacing.sm,
+    paddingBottom: 12,
   },
   amPm: {
-    fontSize: 18,
+    color: theme.colors.accent,
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
-  editButton: {
-    backgroundColor: theme.colors.surface,
+  repeatHint: {
+    color: theme.colors.onSurfaceInactive,
+    fontSize: 12,
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+  editChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.lg,
+    paddingVertical: 8,
+    borderRadius: theme.borderRadius.round,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+    marginBottom: 8,
   },
+  editChipText: {
+    fontSize: 12,
+    color: theme.colors.onBackground,
+    letterSpacing: 0.5,
+  },
+
+  /* Section labels */
+  sectionLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    letterSpacing: 2,
+    marginRight: theme.spacing.md,
+  },
+  sectionHairline: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: theme.colors.border,
+  },
+
+  /* Day pills */
   daysRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: theme.spacing.xl,
   },
   dayCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },
   dayCircleSelected: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.accent,
+    borderColor: theme.colors.accent,
   },
-  scheduleInfo: {
+  dayText: {
+    color: theme.colors.onSurfaceInactive,
+    fontSize: 13,
+    fontWeight: '500',
+    letterSpacing: 0.5,
+  },
+  dayTextSelected: {
+    color: theme.colors.background,
+    fontWeight: '600',
+  },
+
+  /* Schedule card */
+  scheduleCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-  },
-  scheduleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  settingsGroup: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    marginBottom: theme.spacing.sm,
-    overflow: 'hidden',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
+    marginTop: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.md,
-    minHeight: 48,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+  },
+  scheduleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  accentDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: theme.colors.accent,
+    marginRight: theme.spacing.md,
+  },
+  scheduleEyebrow: {
+    fontSize: 10,
+    letterSpacing: 1.5,
+    marginBottom: 2,
+  },
+  scheduleValue: {
+    color: theme.colors.onBackground,
+    fontSize: 15,
+    fontWeight: '400',
+  },
+  scheduleAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  scheduleActionText: {
+    fontSize: 12,
+    color: theme.colors.onBackground,
+    letterSpacing: 0.5,
+  },
+
+  /* Setting rows */
+  settingsGroup: {
+    backgroundColor: theme.colors.surfaceElevated,
+    borderRadius: theme.borderRadius.lg,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    minHeight: 56,
+    backgroundColor: theme.colors.surfaceElevated,
+  },
+  rowLabel: {
+    color: theme.colors.onBackground,
+    fontSize: 15,
+  },
+  rowSub: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chevron: {
+    marginLeft: 6,
   },
   divider: {
-    height: 3,
-    backgroundColor: theme.colors.background,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: theme.colors.border,
+    marginHorizontal: theme.spacing.md,
   },
   textInput: {
     color: theme.colors.onBackground,
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'right',
     flex: 1,
     marginLeft: theme.spacing.md,
   },
+
+  /* Footer */
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.border,
   },
-  footerButton: {
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
+    paddingHorizontal: theme.spacing.md,
+  },
+  deleteText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   saveButton: {
-    backgroundColor: theme.colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.round,
+    backgroundColor: theme.colors.accent,
+  },
+  saveText: {
+    color: theme.colors.background,
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
 });

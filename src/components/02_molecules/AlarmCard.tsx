@@ -1,11 +1,9 @@
 import { format } from 'date-fns';
 import React from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 import { theme } from '../../theme';
 import { Alarm } from '../../types';
 import { Text } from '../01_atoms/Text';
-// import { Button } from '../01_atoms/Button';
-import { TouchableOpacity } from 'react-native';
 
 interface Props {
   alarm: Alarm;
@@ -15,54 +13,95 @@ interface Props {
   onBodyPress?: (id: string) => void;
 }
 
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const repeatSummary = (days?: number[]) => {
+  if (!days || days.length === 0) return 'Once';
+  if (days.length === 7) return 'Every day';
+  const weekdays = [1, 2, 3, 4, 5];
+  const weekend = [0, 6];
+  const isWeekdays = weekdays.every(d => days.includes(d)) && days.length === 5;
+  const isWeekend = weekend.every(d => days.includes(d)) && days.length === 2;
+  if (isWeekdays) return 'Weekdays';
+  if (isWeekend) return 'Weekend';
+  return days.map(d => DAY_NAMES[d]).join(' · ');
+};
+
 export const AlarmCard: React.FC<Props> = ({ alarm, onToggle, onDelete, onTimePress, onBodyPress }) => {
   const isSnoozing = alarm.snoozedUntil && new Date(alarm.snoozedUntil) > new Date();
+  const enabled = alarm.isEnabled;
+
+  const numeralColor = enabled ? theme.colors.onBackground : theme.colors.onSurfaceInactive;
+  const accentColor = enabled ? theme.colors.accent : theme.colors.onSurfaceInactive;
 
   return (
-    <TouchableOpacity 
-      activeOpacity={0.8}
+    <TouchableOpacity
+      activeOpacity={0.85}
       onPress={() => onBodyPress && onBodyPress(alarm.id)}
-      style={[
-        styles.container,
-        { backgroundColor: alarm.isEnabled ? theme.colors.surfaceActive : theme.colors.surface }
-      ]}
+      style={styles.container}
     >
-      <View style={styles.topRow}>
-        <Text variant="caption" color={alarm.isEnabled ? theme.colors.primary : theme.colors.onSurfaceInactive}>
-          {!alarm.isEnabled ? 'Not scheduled' : (alarm.repeatDays && alarm.repeatDays.length > 0 ? 'Every day' : 'Today')}
-        </Text>
-        {isSnoozing && (
-          <Text variant="caption" color={theme.colors.onBackground}>
-            Snoozing until {format(new Date(alarm.snoozedUntil!), 'E h:mm a')}
-          </Text>
-        )}
-      </View>
-      <View style={styles.header}>
-        <View
-          style={styles.timeWrapper}
-          onTouchEnd={() => onTimePress && onTimePress(alarm.id)}
-        >
-          <Text
-            variant="h2"
-            color={alarm.isEnabled ? theme.colors.onBackground : theme.colors.onSurfaceInactive}
-            style={styles.timeText}
-          >
-            {format(alarm.time, 'h:mm')}
-          </Text>
-          <Text
-            variant="body"
-            color={alarm.isEnabled ? theme.colors.onBackground : theme.colors.onSurfaceInactive}
-            style={styles.amPm}
-          >
-            {format(alarm.time, 'a').toLowerCase()}
-          </Text>
+      {/* Left accent bar — amber when enabled, transparent otherwise */}
+      <View
+        style={[
+          styles.accentBar,
+          { backgroundColor: enabled ? theme.colors.accent : 'transparent' },
+        ]}
+      />
+
+      <View style={styles.body}>
+        {/* Eyebrow row */}
+        <View style={styles.topRow}>
+          <View style={styles.eyebrowLeft}>
+            <View
+              style={[
+                styles.eyebrowDot,
+                { backgroundColor: enabled ? theme.colors.accent : theme.colors.border },
+              ]}
+            />
+            <Text variant="caption" style={[styles.eyebrow, { color: accentColor }]}>
+              {(enabled ? repeatSummary(alarm.repeatDays) : 'Off').toUpperCase()}
+            </Text>
+          </View>
+          {isSnoozing && (
+            <Text variant="caption" color={theme.colors.onSurfaceInactive} style={styles.snoozeText}>
+              Snoozing · {format(new Date(alarm.snoozedUntil!), 'E h:mm a').toLowerCase()}
+            </Text>
+          )}
         </View>
-        <Switch
-          value={alarm.isEnabled}
-          onValueChange={(val) => onToggle(alarm.id, val)}
-          trackColor={{ false: theme.colors.switchTrackInactive, true: theme.colors.switchTrackActive }}
-          thumbColor={alarm.isEnabled ? theme.colors.switchThumbActive : theme.colors.switchThumbInactive}
-        />
+
+        {/* Time hero row */}
+        <View style={styles.header}>
+          <View
+            style={styles.timeWrapper}
+            onTouchEnd={() => onTimePress && onTimePress(alarm.id)}
+          >
+            <Text style={[styles.timeText, { color: numeralColor }]}>
+              {format(alarm.time, 'h:mm')}
+            </Text>
+            <Text style={[styles.amPm, { color: accentColor }]}>
+              {format(alarm.time, 'a').toLowerCase()}
+            </Text>
+          </View>
+
+          <Switch
+            value={enabled}
+            onValueChange={(val) => onToggle(alarm.id, val)}
+            trackColor={{ false: theme.colors.switchTrackInactive, true: theme.colors.accentSoft }}
+            thumbColor={enabled ? theme.colors.accent : theme.colors.switchThumbInactive}
+            ios_backgroundColor={theme.colors.switchTrackInactive}
+          />
+        </View>
+
+        {/* Optional label — italic subtitle */}
+        {alarm.label ? (
+          <Text
+            variant="caption"
+            style={[styles.label, { color: theme.colors.onSurfaceInactive }]}
+            numberOfLines={1}
+          >
+            {alarm.label}
+          </Text>
+        ) : null}
       </View>
     </TouchableOpacity>
   );
@@ -70,15 +109,45 @@ export const AlarmCard: React.FC<Props> = ({ alarm, onToggle, onDelete, onTimePr
 
 const styles = StyleSheet.create({
   container: {
-    padding: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    borderRadius: theme.borderRadius.xl,
+    flexDirection: 'row',
     marginBottom: theme.spacing.sm,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceElevated,
+    overflow: 'hidden',
+  },
+  accentBar: {
+    width: 2,
+  },
+  body: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: theme.spacing.xs,
+  },
+  eyebrowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  eyebrowDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    marginRight: theme.spacing.sm,
+  },
+  eyebrow: {
+    fontSize: 11,
+    letterSpacing: 1.8,
+  },
+  snoozeText: {
+    fontSize: 11,
+    fontStyle: 'italic',
   },
   header: {
     flexDirection: 'row',
@@ -87,14 +156,27 @@ const styles = StyleSheet.create({
   },
   timeWrapper: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'flex-end',
   },
   timeText: {
-    marginRight: 4,
-    includeFontPadding: false,
+    fontSize: 56,
+    fontWeight: '200',
+    letterSpacing: -2,
     lineHeight: 64,
+    fontVariant: ['tabular-nums'],
+    includeFontPadding: false,
   },
   amPm: {
-    paddingBottom: 8,
+    fontSize: 13,
+    fontWeight: '500',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginLeft: theme.spacing.sm,
+    paddingBottom: 12,
+  },
+  label: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 2,
   },
 });

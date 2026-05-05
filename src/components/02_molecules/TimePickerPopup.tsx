@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { setHours, setMinutes } from 'date-fns';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -19,21 +20,17 @@ interface Props {
 }
 
 // ─── geometry constants ───────────────────────────────────────────────────────
-const DIAL_SIZE = 260;          // total dial diameter
-const DIAL_RADIUS = DIAL_SIZE / 2; // 130 – used as borderRadius
-const CENTER = DIAL_RADIUS;        // 130 – centre of the View in local coords
-const NUMBER_RADIUS = 105;         // how far from centre the number circles sit
-const DOT_SIZE = 40;               // selection circle diameter (matches reference)
-const DOT_RADIUS = DOT_SIZE / 2;   // 20
+const DIAL_SIZE = 260;
+const DIAL_RADIUS = DIAL_SIZE / 2;
+const CENTER = DIAL_RADIUS;
+const NUMBER_RADIUS = 105;
+const DOT_SIZE = 38;
+const DOT_RADIUS = DOT_SIZE / 2;
 const HOUR_NUMBERS = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const MINUTE_NUMBERS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-
-/** Index (0-based, 12 steps) → {x, y} so the 30×30 label box is centred on
- *  the ring.  label boxes are 30×30, so offset by –15. */
 const getCoordinates = (index: number, total: number) => {
-  const angle = (index * 360) / total - 90; // 0° = 12-o'clock
+  const angle = (index * 360) / total - 90;
   const rad = angle * (Math.PI / 180);
   return {
     x: CENTER + NUMBER_RADIUS * Math.cos(rad) - 15,
@@ -41,14 +38,12 @@ const getCoordinates = (index: number, total: number) => {
   };
 };
 
-/** Screen touch → 0–359° angle measured from 12-o'clock clockwise */
 const touchToAngle = (dx: number, dy: number): number => {
   const rad = Math.atan2(dy, dx);
   const deg = rad * (180 / Math.PI) + 90;
   return (deg + 360) % 360;
 };
 
-/** Snap an arbitrary angle to the nearest slot (0 … steps-1) */
 const snapToSlot = (angle: number, steps: number): number =>
   Math.round((angle / 360) * steps) % steps;
 
@@ -61,8 +56,6 @@ const closestEquivalentAngle = (targetAngle: number, currentAngle: number): numb
     Math.abs(candidate - currentAngle) < Math.abs(closest - currentAngle) ? candidate : closest
   );
 };
-
-// ─── component ────────────────────────────────────────────────────────────────
 
 export const TimePickerPopup: React.FC<Props> = ({
   visible,
@@ -84,36 +77,29 @@ export const TimePickerPopup: React.FC<Props> = ({
   const currentMinute = date.getMinutes();
   const isAm = currentHour < 12;
 
-  // ── display strings ──────────────────────────────────────────────────────
   const displayHour = currentHour % 12 === 0 ? 12 : currentHour % 12;
   const displayHourStr = displayHour < 10 ? `0${displayHour}` : `${displayHour}`;
   const displayMinute = currentMinute < 10 ? `0${currentMinute}` : `${currentMinute}`;
 
-  // ── dial data ────────────────────────────────────────────────────────────
   const dialNumbers = mode === 'hour' ? HOUR_NUMBERS : MINUTE_NUMBERS;
 
-  // For hours: which slot is selected (0–11)
   const hourValue = currentHour % 12 === 0 ? 12 : currentHour % 12;
-  const hourSlot = HOUR_NUMBERS.indexOf(hourValue);           // 0–11
-  // For minutes: continuous 0–59, mapped onto 0–11 slots for the line angle
-  const minuteSlot = Math.round(currentMinute / 5) % 12;   // nearest label
+  const hourSlot = HOUR_NUMBERS.indexOf(hourValue);
+  const minuteSlot = Math.round(currentMinute / 5) % 12;
 
-  // The hand angle in degrees from 12-o'clock (0 = 12-o'clock, clockwise)
   const handAngle =
     mode === 'hour'
       ? (hourSlot / 12) * 360
-      : (currentMinute / 60) * 360; // smooth for minutes
+      : (currentMinute / 60) * 360;
 
   const handAngleAnim = useRef(new Animated.Value(handAngle)).current;
   const isDragging = useRef(false);
 
-  // Whether a number label is "selected" (gets the highlight dot)
   const isLabelSelected = (num: number) =>
     mode === 'hour'
       ? num === hourValue
       : num === MINUTE_NUMBERS[minuteSlot];
 
-  // ── drag / PanResponder ──────────────────────────────────────────────────
   const dialRef = useRef<View>(null);
   const dialLayout = useRef({ x: 0, y: 0 });
 
@@ -134,8 +120,6 @@ export const TimePickerPopup: React.FC<Props> = ({
       setDate((prev) => setHours(prev, newHour));
       return;
     }
-
-    // Map to nearest minute (0–59)
     const minute = Math.round((angle / 360) * 60) % 60;
     setDate((prev) => setMinutes(prev, minute));
   }, [mode, isAm]);
@@ -195,7 +179,6 @@ export const TimePickerPopup: React.FC<Props> = ({
       outputRange: ['-360deg', '720deg'],
     }), [handAngleAnim]);
 
-  // ── tap a label ──────────────────────────────────────────────────────────
   const handleDialPress = (val: number) => {
     if (mode === 'hour') {
       let newHour = val === 12 ? 0 : val;
@@ -218,54 +201,88 @@ export const TimePickerPopup: React.FC<Props> = ({
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.modalContent}>
-          {/* Header label */}
-          <Text variant="caption" color={theme.colors.disabled} style={styles.headerText}>
-            Select time
-          </Text>
+          {/* Atmospheric halo */}
+          <View pointerEvents="none" style={styles.halo} />
 
-          {/* ── HH : MM  AM/PM ── */}
+          {/* Eyebrow header */}
+          <View style={styles.headerRow}>
+            <Text variant="caption" style={styles.eyebrow} color={theme.colors.onSurfaceInactive}>
+              SET TIME
+            </Text>
+            <TouchableOpacity onPress={onClose} hitSlop={12} style={styles.closeBtn}>
+              <Feather name="x" size={16} color={theme.colors.onSurfaceInactive} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Hero time display */}
           <View style={styles.displayContainer}>
-            <TouchableOpacity
-              style={[styles.timeBlock, mode === 'hour' && styles.timeBlockActive]}
-              onPress={() => setMode('hour')}
-            >
-              <Text variant="h2" color={mode === 'hour' ? theme.colors.primary : theme.colors.disabled}>
-                {displayHourStr}
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.timeRow}>
+              <TouchableOpacity onPress={() => setMode('hour')} activeOpacity={0.8}>
+                <Text
+                  style={[
+                    styles.timeDigit,
+                    { color: mode === 'hour' ? theme.colors.onBackground : theme.colors.onSurfaceInactive },
+                  ]}
+                >
+                  {displayHourStr}
+                </Text>
+                <View
+                  style={[
+                    styles.activeUnderline,
+                    { opacity: mode === 'hour' ? 1 : 0 },
+                  ]}
+                />
+              </TouchableOpacity>
 
-            <Text variant="h2" color={theme.colors.disabled} style={styles.colon}>:</Text>
+              <Text style={[styles.colon, { color: theme.colors.border }]}>:</Text>
 
-            <TouchableOpacity
-              style={[styles.timeBlock, mode === 'minute' && styles.timeBlockActive]}
-              onPress={() => setMode('minute')}
-            >
-              <Text variant="h2" color={mode === 'minute' ? theme.colors.primary : theme.colors.disabled}>
-                {displayMinute}
-              </Text>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={() => setMode('minute')} activeOpacity={0.8}>
+                <Text
+                  style={[
+                    styles.timeDigit,
+                    { color: mode === 'minute' ? theme.colors.onBackground : theme.colors.onSurfaceInactive },
+                  ]}
+                >
+                  {displayMinute}
+                </Text>
+                <View
+                  style={[
+                    styles.activeUnderline,
+                    { opacity: mode === 'minute' ? 1 : 0 },
+                  ]}
+                />
+              </TouchableOpacity>
+            </View>
 
+            {/* Segmented AM/PM */}
             <View style={styles.amPmContainer}>
               <TouchableOpacity
-                style={[
-                  styles.amPmButton,
-                  isAm && styles.amPmButtonActive,
-                  { borderBottomWidth: 1, borderBottomColor: theme.colors.secondaryVariant },
-                ]}
+                style={[styles.amPmButton, isAm && styles.amPmButtonActive]}
                 onPress={() => handleAmPm(true)}
+                activeOpacity={0.8}
               >
-                <Text variant="body" color={isAm ? theme.colors.primary : theme.colors.disabled}>a.m.</Text>
+                <Text style={[styles.amPmText, { color: isAm ? theme.colors.background : theme.colors.onSurfaceInactive }]}>
+                  AM
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.amPmButton, !isAm && styles.amPmButtonActive]}
                 onPress={() => handleAmPm(false)}
+                activeOpacity={0.8}
               >
-                <Text variant="body" color={!isAm ? theme.colors.primary : theme.colors.disabled}>p.m.</Text>
+                <Text style={[styles.amPmText, { color: !isAm ? theme.colors.background : theme.colors.onSurfaceInactive }]}>
+                  PM
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* ── Dial ── */}
+          {/* Mode hint */}
+          <Text variant="caption" style={styles.modeHint} color={theme.colors.onSurfaceInactive}>
+            {mode === 'hour' ? 'Drag to set the hour' : 'Drag to set the minute'}
+          </Text>
+
+          {/* Dial */}
           <View style={styles.dialContainer}>
             <View
               ref={dialRef}
@@ -277,7 +294,6 @@ export const TimePickerPopup: React.FC<Props> = ({
               }}
               {...panResponder.panHandlers}
             >
-              {/* Hand layer rotates as one unit for smoother drag/animations */}
               <Animated.View
                 pointerEvents="none"
                 style={[styles.handLayer, { transform: [{ rotate: handRotate }] }]}
@@ -286,10 +302,8 @@ export const TimePickerPopup: React.FC<Props> = ({
                 <View style={styles.handDot} />
               </Animated.View>
 
-              {/* Centre pivot dot (drawn on top) */}
               <View style={styles.dialCenter} />
 
-              {/* Number labels — rendered on top of the hand */}
               {dialNumbers.map((num, i) => {
                 const pos = getCoordinates(i, 12);
                 const selected = isLabelSelected(num);
@@ -300,8 +314,13 @@ export const TimePickerPopup: React.FC<Props> = ({
                     onPress={() => handleDialPress(num)}
                   >
                     <Text
-                      variant="body"
-                      color={selected ? theme.colors.onPrimary : theme.colors.onSurfaceInactive}
+                      style={[
+                        styles.dialNumberText,
+                        {
+                          color: selected ? theme.colors.background : theme.colors.onSurfaceInactive,
+                          fontWeight: selected ? '600' : '400',
+                        },
+                      ]}
                     >
                       {mode === 'minute' && num < 10 ? `0${num}` : num}
                     </Text>
@@ -311,13 +330,14 @@ export const TimePickerPopup: React.FC<Props> = ({
             </View>
           </View>
 
-          {/* ── Footer ── */}
+          {/* Footer */}
           <View style={styles.footer}>
-            <TouchableOpacity style={styles.footerButton} onPress={onClose}>
-              <Text variant="body" color={theme.colors.primary}>Cancel</Text>
+            <TouchableOpacity style={styles.cancelButton} onPress={onClose} activeOpacity={0.7}>
+              <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.footerButton} onPress={() => onSave(date)}>
-              <Text variant="body" color={theme.colors.primary}>OK</Text>
+            <TouchableOpacity style={styles.okButton} onPress={() => onSave(date)} activeOpacity={0.85}>
+              <Text style={styles.okText}>Set time</Text>
+              <Feather name="arrow-right" size={16} color={theme.colors.background} />
             </TouchableOpacity>
           </View>
         </View>
@@ -329,61 +349,127 @@ export const TimePickerPopup: React.FC<Props> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    width: 320,
+    backgroundColor: theme.colors.surfaceElevated,
+    borderRadius: 28,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
+    width: 332,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+    overflow: 'hidden',
   },
-  headerText: {
+  halo: {
+    position: 'absolute',
+    top: -120,
+    right: -100,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: theme.colors.accentSoft,
+    opacity: 0.45,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: theme.spacing.md,
   },
+  eyebrow: {
+    fontSize: 11,
+    letterSpacing: 2.5,
+  },
+  closeBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+  },
+
+  /* Hero display */
   displayContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.xl,
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xs,
   },
-  timeBlock: {
-    backgroundColor: theme.colors.secondaryVariant,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
   },
-  timeBlockActive: {
-    backgroundColor: theme.colors.surfaceActive,
+  timeDigit: {
+    fontSize: 56,
+    fontWeight: '200',
+    letterSpacing: -2,
+    lineHeight: 60,
+    fontVariant: ['tabular-nums'],
+    includeFontPadding: false,
+  },
+  activeUnderline: {
+    height: 2,
+    marginTop: 4,
+    backgroundColor: theme.colors.accent,
+    borderRadius: 1,
   },
   colon: {
-    marginHorizontal: theme.spacing.xs,
+    fontSize: 48,
+    fontWeight: '200',
+    marginHorizontal: 6,
+    paddingBottom: 6,
+    fontVariant: ['tabular-nums'],
   },
   amPmContainer: {
-    marginLeft: theme.spacing.md,
-    borderColor: theme.colors.secondaryVariant,
-    borderWidth: 1,
+    flexDirection: 'column',
+    borderColor: theme.colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: theme.borderRadius.md,
     overflow: 'hidden',
   },
   amPmButton: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 6,
     backgroundColor: 'transparent',
+    minWidth: 52,
+    alignItems: 'center',
   },
   amPmButtonActive: {
-    backgroundColor: theme.colors.secondaryVariant,
+    backgroundColor: theme.colors.accent,
   },
+  amPmText: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 1.2,
+  },
+
+  modeHint: {
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginBottom: theme.spacing.lg,
+    marginTop: theme.spacing.xs,
+  },
+
+  /* Dial */
   dialContainer: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
   },
   dial: {
     width: DIAL_SIZE,
     height: DIAL_SIZE,
     borderRadius: DIAL_RADIUS,
-    backgroundColor: theme.colors.secondaryVariant,
+    backgroundColor: theme.colors.background,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
     position: 'relative',
   },
   handLayer: {
@@ -393,30 +479,30 @@ const styles = StyleSheet.create({
   },
   handLine: {
     position: 'absolute',
-    width: 2,
+    width: 1,
     height: NUMBER_RADIUS,
-    left: CENTER - 1,
+    left: CENTER - 0.5,
     top: CENTER - NUMBER_RADIUS,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.accent,
+    opacity: 0.7,
   },
   handDot: {
     position: 'absolute',
     width: DOT_SIZE,
     height: DOT_SIZE,
     borderRadius: DOT_RADIUS,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.accent,
     left: CENTER - DOT_RADIUS,
     top: CENTER - NUMBER_RADIUS - DOT_RADIUS,
   },
-  // Small pivot dot, drawn last so it sits on top of everything
   dialCenter: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.colors.primary,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.colors.accent,
     position: 'absolute',
-    left: CENTER - 4,
-    top: CENTER - 4,
+    left: CENTER - 2,
+    top: CENTER - 2,
   },
   dialNumber: {
     position: 'absolute',
@@ -424,16 +510,46 @@ const styles = StyleSheet.create({
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    // Rendered after handWrapper so they appear above the dot
     zIndex: 2,
   },
+  dialNumberText: {
+    fontSize: 14,
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.3,
+  },
+
+  /* Footer */
   footer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: theme.spacing.md,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.border,
   },
-  footerButton: {
-    marginLeft: theme.spacing.lg,
-    padding: theme.spacing.sm,
+  cancelButton: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+  },
+  cancelText: {
+    color: theme.colors.onSurfaceInactive,
+    fontSize: 14,
+    letterSpacing: 0.3,
+  },
+  okButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.round,
+    backgroundColor: theme.colors.accent,
+  },
+  okText: {
+    color: theme.colors.background,
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
 });

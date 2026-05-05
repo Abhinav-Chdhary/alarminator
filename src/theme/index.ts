@@ -19,6 +19,10 @@ export const theme = {
     switchTrackInactive: '#3B4145',
     switchThumbActive: '#C2F4FA',
     switchThumbInactive: '#8A9194',
+    accent: '#F2C572',
+    accentSoft: '#3D2E16',
+    border: '#2A2D32',
+    surfaceElevated: '#181B1F',
   },
   spacing: {
     xs: 4,
