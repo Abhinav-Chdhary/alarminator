@@ -52,7 +52,7 @@ const scheduleRecurringTriggerByIdentifier = async (alarm: Alarm, identifier: st
   return Notifications.scheduleNotificationAsync({
     identifier,
     content: {
-      title: alarm.label || 'Alarm',
+      title: 'Alarm',
       body: alarm.task ? `Task: ${alarm.task}` : 'Time to wake up.',
       sound: DEFAULT_ALARM_SOUND,
       data: {

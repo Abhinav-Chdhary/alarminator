@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import React, { useRef, useState } from 'react';
-import { Modal, PanResponder, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, PanResponder, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 import { theme } from '../../theme';
 import { Alarm } from '../../types';
 import { Text } from '../01_atoms/Text';
@@ -162,18 +162,7 @@ export const AlarmSettingsPopup: React.FC<Props> = ({
             {/* Details */}
             <SectionLabel>ALARM DETAILS</SectionLabel>
             <View style={styles.settingsGroup}>
-              <View style={styles.row}>
-                <Text style={styles.rowLabel}>Name</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={editedAlarm.label}
-                  placeholder="Untitled"
-                  onChangeText={(text) => setEditedAlarm({ ...editedAlarm, label: text })}
-                  placeholderTextColor={theme.colors.onSurfaceInactive}
-                />
-              </View>
 
-              <View style={styles.divider} />
 
               <TouchableOpacity activeOpacity={0.85} style={styles.row}>
                 <Text style={styles.rowLabel}>Sound</Text>
@@ -349,7 +338,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  /* Section labels */
+
   sectionLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -478,13 +467,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.border,
     marginHorizontal: theme.spacing.md,
   },
-  textInput: {
-    color: theme.colors.onBackground,
-    fontSize: 15,
-    textAlign: 'right',
-    flex: 1,
-    marginLeft: theme.spacing.md,
-  },
+
 
   /* Footer */
   footer: {

@@ -95,16 +95,8 @@ export const AlarmCard: React.FC<Props> = ({ alarm, onToggle, onDelete, onTimePr
           </View>
         </View>
 
-        {/* Optional label — italic subtitle */}
-        {alarm.label ? (
-          <Text
-            variant="caption"
-            style={[styles.label, { color: theme.colors.onSurfaceInactive }]}
-            numberOfLines={1}
-          >
-            {alarm.label}
-          </Text>
-        ) : null}
+
+
       </View>
     </TouchableOpacity>
   );
@@ -177,11 +169,7 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
     paddingBottom: 12,
   },
-  label: {
-    fontSize: 12,
-    fontStyle: 'italic',
-    marginTop: 2,
-  },
+
   switchWrap: {
     minHeight: 33,
     alignItems: 'flex-start',

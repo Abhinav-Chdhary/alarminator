@@ -33,14 +33,14 @@ export const saveAlarms = async (alarms: Alarm[]) => {
   }
 };
 
-export const addAlarm = async (time: Date, label: string = 'Alarm', task: string = 'math'): Promise<Alarm> => {
+export const addAlarm = async (time: Date, task: string = 'math'): Promise<Alarm> => {
   const alarms = await getAlarms();
   const alarmId = uuid.v4().toString();
   const newAlarm: Alarm = {
     id: alarmId,
     time,
     isEnabled: true,
-    label,
+
     task,
     notificationIds: [],
     snoozeNotificationId: `alarm-snooze-${alarmId}`,

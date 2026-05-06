@@ -79,7 +79,7 @@ export default function HomeScreen() {
 
   const handleTimeSave = (newTime: Date) => {
     if (isCreatingNew) {
-      addAlarm(newTime, 'Morning Wakeup', 'Type word "gravity"');
+      addAlarm(newTime, 'Type word "gravity"');
     } else if (editingAlarmId) {
       const alarmToUpdate = alarms.find(a => a.id === editingAlarmId);
       if (alarmToUpdate) {

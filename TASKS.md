@@ -7,6 +7,8 @@ This document outlines the various tasks a user must complete to dismiss an alar
 - [x] Allow setting alarms (Right now when we click on the plus button, only the alarm is created right away. Instead the alarm is created right away for plus 1 minute but we should show the same modal for setting the time that we use in editing the alarm time. )
 - [ ] Allow setting custom sounds for alarms
 - [ ] Allow changing alarm settings like days of week, time, sound, vibrate or not
+- [ ] Allow changing alarm ringtone
+- [ ] Allow adding 'adding breaks' for alarms
 
 ## Issues
 - [x] Clicking on the time opens the time picker and the alarm setting popup both. 

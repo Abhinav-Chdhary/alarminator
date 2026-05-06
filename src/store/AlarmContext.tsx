@@ -5,7 +5,7 @@ import * as alarmStorage from '../services/alarmStorage';
 interface AlarmContextType {
   alarms: Alarm[];
   loadAlarms: () => Promise<void>;
-  addAlarm: (time: Date, label?: string, task?: string) => Promise<void>;
+  addAlarm: (time: Date, task?: string) => Promise<void>;
   updateAlarm: (alarm: Alarm) => Promise<void>;
   deleteAlarm: (id: string) => Promise<void>;
   toggleAlarm: (id: string, isEnabled: boolean) => Promise<void>;
@@ -26,8 +26,8 @@ export const AlarmProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     loadAlarms();
   }, []);
 
-  const addAlarm = async (time: Date, label?: string, task?: string) => {
-    await alarmStorage.addAlarm(time, label, task);
+  const addAlarm = async (time: Date, task?: string) => {
+    await alarmStorage.addAlarm(time, task);
     await loadAlarms();
   };
 
