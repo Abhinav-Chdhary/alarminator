@@ -40,7 +40,6 @@ export const addAlarm = async (time: Date, task: string = 'math'): Promise<Alarm
     id: alarmId,
     time,
     isEnabled: true,
-
     task,
     notificationIds: [],
     snoozeNotificationId: `alarm-snooze-${alarmId}`,

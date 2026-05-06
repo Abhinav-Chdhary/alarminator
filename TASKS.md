@@ -13,6 +13,8 @@ This document outlines the various tasks a user must complete to dismiss an alar
 ## Issues
 - [x] Clicking on the time opens the time picker and the alarm setting popup both. 
 - [x] Enabled and disabled toggles of the alarm card are misaligned horizontally in the stack of alarm cards. 
+- [ ] Alarm screen only appears after we click on the notification
+- [ ] Alarm doesn't stop automatically even after 'dismissing' the alarm
 
 ## Implementation Order (Phase 1: Core Tasks)
 

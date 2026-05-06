@@ -28,7 +28,8 @@ const hasExponentAV = !!requireOptionalNativeModule('ExponentAV');
 export default function AlarmActiveScreen() {
   const { alarmId, task } = useLocalSearchParams<{ alarmId: string, task: string }>();
   const router = useRouter();
-  const { setSnoozedUntil } = useAlarms();
+  const { alarms, toggleAlarm, setSnoozedUntil } = useAlarms();
+  const alarm = alarms.find(a => a.id === alarmId);
 
   const [snoozeMinutes, setSnoozeMinutes] = useState(5);
   const [message, setMessage] = useState<{ title: string, body: string } | null>(null);
@@ -109,6 +110,11 @@ export default function AlarmActiveScreen() {
     await stopSound();
     await clearSnoozeNotification(alarmId);
     await setSnoozedUntil(alarmId, undefined);
+
+    // If it's a one-time alarm, disable it so it shows as unscheduled
+    if (alarm && (!alarm.repeatDays || alarm.repeatDays.length === 0)) {
+      await toggleAlarm(alarmId, false);
+    }
 
     setMessage({
       title: 'Task',

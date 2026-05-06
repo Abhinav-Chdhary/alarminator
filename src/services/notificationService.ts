@@ -20,7 +20,7 @@ const buildRecurringIdentifiers = (alarm: Alarm) => {
   if (alarm.repeatDays && alarm.repeatDays.length > 0) {
     return alarm.repeatDays.map((day) => `alarm-${alarm.id}-weekday-${day}`);
   }
-  return [`alarm-${alarm.id}-daily`];
+  return [`alarm-${alarm.id}-once`];
 };
 
 const buildSnoozeIdentifier = (alarmId: string) => `${SNOOZE_ID_PREFIX}${alarmId}`;
@@ -43,11 +43,37 @@ const buildWeeklyTrigger = (
   channelId: Platform.OS === 'android' ? ALARM_CHANNEL_ID : undefined,
 });
 
+const buildOnceTrigger = (alarm: Alarm): Notifications.DateTriggerInput => {
+  const now = new Date();
+  const date = new Date();
+  
+  // Set the target time for today, zeroing out seconds and milliseconds
+  date.setHours(alarm.time.getHours(), alarm.time.getMinutes(), 0, 0);
+
+  // If the target time has already passed today, schedule it for tomorrow
+  if (date.getTime() <= now.getTime()) {
+    date.setDate(date.getDate() + 1);
+  }
+
+  return {
+    type: Notifications.SchedulableTriggerInputTypes.DATE,
+    date: date.getTime(),
+    channelId: Platform.OS === 'android' ? ALARM_CHANNEL_ID : undefined,
+  };
+};
+
 const scheduleRecurringTriggerByIdentifier = async (alarm: Alarm, identifier: string) => {
   const weekdayMatch = identifier.match(/-weekday-(\d)$/);
-  const trigger = weekdayMatch
-    ? buildWeeklyTrigger(alarm, getWeekdayTriggerValue(Number(weekdayMatch[1])))
-    : buildDailyTrigger(alarm);
+  const onceMatch = identifier.endsWith('-once');
+  
+  let trigger;
+  if (weekdayMatch) {
+    trigger = buildWeeklyTrigger(alarm, getWeekdayTriggerValue(Number(weekdayMatch[1])));
+  } else if (onceMatch) {
+    trigger = buildOnceTrigger(alarm);
+  } else {
+    trigger = buildDailyTrigger(alarm);
+  }
 
   return Notifications.scheduleNotificationAsync({
     identifier,
@@ -128,7 +154,7 @@ export const scheduleAlarmNotification = async (alarm: Alarm): Promise<string[]>
 export const cancelAlarmNotification = async (alarmId: string, notificationIds?: string[]) => {
   const recurringIds = notificationIds && notificationIds.length > 0
     ? notificationIds
-    : [`alarm-${alarmId}-daily`];
+    : [`alarm-${alarmId}-once`];
 
   await cancelIdentifiers([...recurringIds, buildSnoozeIdentifier(alarmId)]);
 };
